@@ -6,6 +6,17 @@ from langchain_google_vertexai import GemmaLocalKaggle
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.document_loaders.csv_loader import CSVLoader
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+
+store = {}
+
+
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = ChatMessageHistory()
+    return store[session_id]
 
 
 def get_retriever():
@@ -42,7 +53,14 @@ def get_qa_chain():
         retriever=retriever,
         chain_type_kwargs={"prompt": prompt}
     )
-    return qa_chain
+    conversational_chain = RunnableWithMessageHistory(
+        qa_chain,
+        get_session_history,
+        input_messages_key="input",
+        history_messages_key="chat_history",
+        output_messages_key="answer"
+    ).pick('answer')
+    return conversational_chain
 
 
 def get_ai_message(user_message):
@@ -50,6 +68,12 @@ def get_ai_message(user_message):
     os.environ["KAGGLE_USERNAME"] = os.getenv('KAGGLE_USERNAME')
     os.environ["KAGGLE_KEY"] = os.getenv('KAGGLE_KEY')
     os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "1.0"
-    qa_chain = get_qa_chain()
-    ai_message = qa_chain({"query": user_message})
-    return ai_message['result']
+    rag_chain = get_qa_chain()
+    ai_message = rag_chain.stream(
+        {
+            "input": user_message
+        },
+        config={
+            "configurable": {"session_id": "abc123"}
+        })
+    return ai_message

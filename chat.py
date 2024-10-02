@@ -21,5 +21,5 @@ if user_question := st.chat_input(placeholder="Ask me about wine!"):
     with st.spinner("Generating answer..."):
         ai_message = get_ai_message(user_question)
         with st.chat_message('ai'):
-            st.write(ai_message)
+            st.write_stream(ai_message)
         st.session_state.message_list.append({'role': 'ai', 'content': ai_message})
