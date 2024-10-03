@@ -3,7 +3,7 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_upstage import UpstageEmbeddings
 from langchain_community.llms import HuggingFaceTextGenInference
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
@@ -24,7 +24,7 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 
 def get_retriever():
-    embedding = OpenAIEmbeddings(model='text-embedding-3-large')
+    embedding = UpstageEmbeddings(api_key=os.getenv('UP_API_KEY'), model="solar-embedding-1-large")
     database = PineconeVectorStore.from_existing_index(index_name='wine-upstage-index', embedding=embedding)
     retriever = database.as_retriever()
     return retriever
