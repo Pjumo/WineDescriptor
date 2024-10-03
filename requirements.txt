@@ -5,6 +5,7 @@ langchainhub
 langchain-upstage
 langchain-pinecone
 langchain-community
+langchain-huggingface
 streamlit
 text_generation
 python-dotenv
