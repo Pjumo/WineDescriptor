@@ -56,7 +56,7 @@ jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
 kaggle==1.6.17
 kagglehub==0.3.1
-keras==2.10.0
+keras==2.11.0
 keras-nlp==0.15.1
 Keras-Preprocessing==1.1.2
 langchain==0.3.1
@@ -93,7 +93,7 @@ pinecone-client==5.0.1
 pinecone-plugin-inference==1.1.0
 pinecone-plugin-interface==0.0.7
 proto-plus==1.24.0
-protobuf==3.20.3
+protobuf==5.28.2
 pyarrow==17.0.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
@@ -127,13 +127,13 @@ SQLAlchemy==2.0.35
 streamlit==1.39.0
 sympy==1.13.3
 tenacity==8.5.0
-tensorboard==2.10.1
+tensorboard==2.11.2
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
-tensorflow==2.10.1
-tensorflow-estimator==2.10.0
+tensorflow==2.11.1
+tensorflow-estimator==2.11.0
 tensorflow-hub==0.16.1
-tensorflow-intel==2.17.0
+tensorflow-intel==2.11.1
 tensorflow-io-gcs-filesystem==0.31.0
 tensorflow-text==2.10.0
 termcolor==2.4.0
