@@ -1,10 +1,10 @@
 import os
 import logging
 
+from langchain_community.llms import HuggingFaceTextGenInference
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain import hub
 from dotenv import load_dotenv
-from langchain_google_vertexai import GemmaChatLocalKaggle
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.document_loaders.csv_loader import CSVLoader
@@ -22,13 +22,12 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 
 def parse_data():
-    loader = CSVLoader(file_path='./wine-raitngs.csv', encoding='utf-8')
+    loader = CSVLoader(file_path='./wine.csv', encoding='utf-8')
     return loader.load()
 
 
 def get_retriever():
     try:
-        logging.info("Embedding !!!!!!!!!!!!!!\n")
         model_path = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
         model_kwargs = {'device': 'cpu'}
         encode_kwargs = {'normalize_embeddings': False}
@@ -37,9 +36,7 @@ def get_retriever():
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs
         )
-        logging.info("CSV Loading !!!!!!!!!!!!!!\n")
         data = parse_data()
-        logging.info("Pinecone Vector Store !!!!!!!!!!!!!!\n")
         database = PineconeVectorStore.from_documents(data, embedding, index_name='wine-index')
         retriever = database.as_retriever()
         return retriever
@@ -49,21 +46,31 @@ def get_retriever():
 
 
 def get_llm():
-    logging.info("Model Downloading !!!!!!!!!!!!!!\n")
-    return GemmaChatLocalKaggle(model_name="gemma_2b_en", keras_backend="tensorflow")
+    llm = HuggingFaceTextGenInference(
+        inference_server_url="https://api-inference.huggingface.co/models/google/gemma-2b",
+        max_new_tokens=1024,
+        top_k=50,
+        temperature=0.1,
+        repetition_penalty=1.03,
+        server_kwargs={
+            "headers": {
+                "Authorization": f"Bearer {os.getenv('HUGGINGFACEHUB_API_TOKEN')}",
+                "Content-Type": "application/json"
+            }
+        }
+    )
+    return llm
 
 
 def get_rag_chain():
     prompt = hub.pull("rlm/rag-prompt")
     llm = get_llm()
     retriever = get_retriever()
-    logging.info("QA Chain !!!!!!!!!!!!!!\n")
     qa_chain = RetrievalQA.from_chain_type(
         llm,
         retriever=retriever,
         chain_type_kwargs={"prompt": prompt}
     )
-    logging.info("History Chain !!!!!!!!!!!!!!\n")
     conversational_chain = RunnableWithMessageHistory(
         qa_chain,
         get_session_history,
@@ -77,10 +84,8 @@ def get_rag_chain():
 
 def get_ai_message(user_message):
     load_dotenv(verbose=True)
-    os.environ["KAGGLE_USERNAME"] = os.getenv("KAGGLE_USERNAME")
-    os.environ["KAGGLE_API_KEY"] = os.getenv("KAGGLE_API_KEY")
+    os.environ['HUGGINGFACEHUB_API_TOKEN'] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
     rag_chain = get_rag_chain()
-    logging.info("Streaming !!!!!!!!!!!!!!\n")
     ai_message = rag_chain.stream(
         {
             "input": user_message

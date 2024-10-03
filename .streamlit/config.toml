@@ -1,3 +1,0 @@
-[logger]
-level = "info"
-messageFormat = "%(asctime)s %(levelname) -7s %(name)s: %(message)s"
