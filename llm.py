@@ -2,7 +2,7 @@ from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain import hub
 import os
 from dotenv import load_dotenv
-from langchain_google_vertexai import GemmaLocalKaggle
+from langchain_google_vertexai import GemmaChatLocalHF
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.document_loaders.csv_loader import CSVLoader
@@ -21,7 +21,7 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 def get_retriever():
     model_path = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-    model_kwargs = {'device': 'gpu'}
+    model_kwargs = {'device': 'cpu'}
     encode_kwargs = {'normalize_embeddings': False}
     embedding = HuggingFaceEmbeddings(
         model_name=model_path,
@@ -35,18 +35,13 @@ def get_retriever():
 
 
 def get_llm(model_name):
-    keras_backend: str = "tensorflow"
-    llm = GemmaLocalKaggle(
-        model_name=model_name,
-        keras_backend=keras_backend,
-        max_tokens=64,
-    )
+    llm = GemmaChatLocalHF(model_name=model_name, hf_access_token=os.getenv("HF_ACCESS_TOKEN"))
     return llm
 
 
 def get_rag_chain():
     prompt = hub.pull("rlm/rag-prompt")
-    llm = get_llm("gemma_2b_en")
+    llm = get_llm("google/gemma-2b")
     retriever = get_retriever()
     qa_chain = RetrievalQA.from_chain_type(
         llm,
