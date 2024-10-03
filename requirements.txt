@@ -1,6 +1,5 @@
-tensorflow
-keras
 keras-nlp
+keras>=3
 langchain
 langchain-google-vertexai
 langchainhub
