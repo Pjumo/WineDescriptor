@@ -1,9 +1,14 @@
 import streamlit as st
-from llm import get_ai_message
+from llm import get_ai_response
+from dotenv import load_dotenv
+import os
 
 st.set_page_config(page_title="Wine Descriptor", page_icon="🍷")
 st.title("🍷 Wine Descriptor")
 st.caption("Answering your questions about wine")
+
+load_dotenv(verbose=True)
+os.environ['HUGGINGFACEHUB_API_TOKEN'] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
 
 if 'message_list' not in st.session_state:
     st.session_state.message_list = []
@@ -19,7 +24,7 @@ if user_question := st.chat_input(placeholder="Ask me about wine!"):
     st.session_state.message_list.append({'role': 'user', 'content': user_question})
 
     with st.spinner("Generating answer..."):
-        ai_message = get_ai_message(user_question)
+        ai_response = get_ai_response(user_question)
         with st.chat_message('ai'):
-            st.write_stream(ai_message)
-        st.session_state.message_list.append({'role': 'ai', 'content': ai_message})
+            st.write_stream(ai_response)
+        st.session_state.message_list.append({'role': 'ai', 'content': ai_response})
