@@ -44,7 +44,7 @@ def get_llm(model_name):
     return llm
 
 
-def get_qa_chain():
+def get_rag_chain():
     prompt = hub.pull("rlm/rag-prompt")
     llm = get_llm("gemma_2b_en")
     retriever = get_retriever()
@@ -68,7 +68,8 @@ def get_ai_message(user_message):
     os.environ["KAGGLE_USERNAME"] = os.getenv('KAGGLE_USERNAME')
     os.environ["KAGGLE_KEY"] = os.getenv('KAGGLE_KEY')
     os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "1.0"
-    rag_chain = get_qa_chain()
+    os.environ['PINECONE_API_KEY'] = os.getenv('PINECONE_API_KEY')
+    rag_chain = get_rag_chain()
     ai_message = rag_chain.stream(
         {
             "input": user_message
