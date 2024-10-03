@@ -1,6 +1,9 @@
+import os
+import logging
+
+import streamlit as st
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain import hub
-import os
 from dotenv import load_dotenv
 from langchain_google_vertexai import GemmaChatLocalHF
 from langchain.chains import RetrievalQA
@@ -19,35 +22,53 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
     return store[session_id]
 
 
-def get_retriever():
-    model_path = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-    model_kwargs = {'device': 'cpu'}
-    encode_kwargs = {'normalize_embeddings': False}
-    embedding = HuggingFaceEmbeddings(
-        model_name=model_path,
-        model_kwargs=model_kwargs,
-        encode_kwargs=encode_kwargs
-    )
+@st.cache_data
+def parse_data():
     loader = CSVLoader(file_path='./wine-raitngs.csv', encoding='utf-8')
-    data = loader.load()
-    database = PineconeVectorStore.from_documents(data, embedding, index_name='wine-index')
-    return database.as_retriever()
+    return loader.load()
 
 
-def get_llm(model_name):
-    llm = GemmaChatLocalHF(model_name=model_name, hf_access_token=os.getenv("HF_ACCESS_TOKEN"))
-    return llm
+@st.cache_resource
+def get_retriever():
+    try:
+        logging.info("Embedding !!!!!!!!!!!!!!\n")
+        model_path = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        model_kwargs = {'device': 'cpu'}
+        encode_kwargs = {'normalize_embeddings': False}
+        embedding = HuggingFaceEmbeddings(
+            model_name=model_path,
+            model_kwargs=model_kwargs,
+            encode_kwargs=encode_kwargs
+        )
+        logging.info("CSV Loading !!!!!!!!!!!!!!\n")
+        data = parse_data()
+        logging.info("Pinecone Vector Store !!!!!!!!!!!!!!\n")
+        database = PineconeVectorStore.from_documents(data, embedding, index_name='wine-index')
+        retriever = database.as_retriever()
+        return retriever
+    except Exception as e:
+        logging.error(f"Error creating retriever: {e}")
+        raise
 
 
+@st.cache_resource
+def get_llm():
+    logging.info("Model Downloading !!!!!!!!!!!!!!\n")
+    return GemmaChatLocalHF(model_name="google/gemma-2b", hf_access_token=os.getenv("HF_ACCESS_TOKEN"))
+
+
+@st.cache_resource
 def get_rag_chain():
     prompt = hub.pull("rlm/rag-prompt")
-    llm = get_llm("google/gemma-2b")
+    llm = get_llm()
     retriever = get_retriever()
+    logging.info("QA Chain !!!!!!!!!!!!!!\n")
     qa_chain = RetrievalQA.from_chain_type(
         llm,
         retriever=retriever,
         chain_type_kwargs={"prompt": prompt}
     )
+    logging.info("History Chain !!!!!!!!!!!!!!\n")
     conversational_chain = RunnableWithMessageHistory(
         qa_chain,
         get_session_history,
@@ -55,21 +76,24 @@ def get_rag_chain():
         history_messages_key="chat_history",
         output_messages_key="answer"
     ).pick('answer')
+
     return conversational_chain
 
 
+@st.cache_data
 def get_ai_message(user_message):
     load_dotenv(verbose=True)
-    os.environ["KAGGLE_USERNAME"] = os.getenv('KAGGLE_USERNAME')
-    os.environ["KAGGLE_KEY"] = os.getenv('KAGGLE_KEY')
-    os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "1.0"
-    os.environ['PINECONE_API_KEY'] = os.getenv('PINECONE_API_KEY')
-    rag_chain = get_rag_chain()
-    ai_message = rag_chain.stream(
-        {
-            "input": user_message
-        },
-        config={
-            "configurable": {"session_id": "abc123"}
-        })
-    return ai_message
+    try:
+        rag_chain = get_rag_chain()
+        logging.info("Streaming !!!!!!!!!!!!!!\n")
+        ai_message = rag_chain.stream(
+            {
+                "input": user_message
+            },
+            config={
+                "configurable": {"session_id": "abc123"}
+            })
+        return ai_message
+    except Exception as e:
+        logging.error(f"Error creating AI message: {e}")
+        return "An error occurred while processing your request."
