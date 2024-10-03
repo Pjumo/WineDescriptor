@@ -31,7 +31,7 @@ def get_retriever():
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs
         )
-        loader = CSVLoader(file_path='./wine.csv', encoding='utf-8')
+        loader = CSVLoader(file_path='./wine.csv', encoding='cp494')
         data = loader.load()
         database = PineconeVectorStore.from_documents(data, embedding, index_name='wine-index')
         retriever = database.as_retriever()
