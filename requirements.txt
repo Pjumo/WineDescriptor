@@ -1,10 +1,10 @@
 transformers
 sentence-transformers
 langchain
-langchain-google-vertexai
 langchainhub
 langchain-upstage
 langchain-pinecone
 langchain-community
 streamlit
 text_generation
+python-dotenv
