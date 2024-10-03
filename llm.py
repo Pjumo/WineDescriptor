@@ -1,11 +1,10 @@
 import os
 import logging
 
-import streamlit as st
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain import hub
 from dotenv import load_dotenv
-from langchain_google_vertexai import GemmaChatLocalHF
+from langchain_google_vertexai import GemmaChatLocalKaggle
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.document_loaders.csv_loader import CSVLoader
@@ -22,13 +21,11 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
     return store[session_id]
 
 
-@st.cache_data
 def parse_data():
     loader = CSVLoader(file_path='./wine-raitngs.csv', encoding='utf-8')
     return loader.load()
 
 
-@st.cache_resource
 def get_retriever():
     try:
         logging.info("Embedding !!!!!!!!!!!!!!\n")
@@ -51,13 +48,11 @@ def get_retriever():
         raise
 
 
-@st.cache_resource
 def get_llm():
     logging.info("Model Downloading !!!!!!!!!!!!!!\n")
-    return GemmaChatLocalHF(model_name="google/gemma-2b", hf_access_token=os.getenv("HF_ACCESS_TOKEN"))
+    return GemmaChatLocalKaggle(model_name="gemma_2b_en", keras_backend="tensorflow")
 
 
-@st.cache_resource
 def get_rag_chain():
     prompt = hub.pull("rlm/rag-prompt")
     llm = get_llm()
@@ -82,17 +77,15 @@ def get_rag_chain():
 
 def get_ai_message(user_message):
     load_dotenv(verbose=True)
-    try:
-        rag_chain = get_rag_chain()
-        logging.info("Streaming !!!!!!!!!!!!!!\n")
-        ai_message = rag_chain.stream(
-            {
-                "input": user_message
-            },
-            config={
-                "configurable": {"session_id": "abc123"}
-            })
-        return ai_message
-    except Exception as e:
-        logging.error(f"Error creating AI message: {e}")
-        return "An error occurred while processing your request."
+    os.environ["KAGGLE_USERNAME"] = os.getenv("KAGGLE_USERNAME")
+    os.environ["KAGGLE_API_KEY"] = os.getenv("KAGGLE_API_KEY")
+    rag_chain = get_rag_chain()
+    logging.info("Streaming !!!!!!!!!!!!!!\n")
+    ai_message = rag_chain.stream(
+        {
+            "input": user_message
+        },
+        config={
+            "configurable": {"session_id": "abc123"}
+        })
+    return ai_message
