@@ -1,11 +1,11 @@
-keras-nlp
-keras>=3
 transformers
 sentence-transformers
 langchain
+langchain-google-vertexai
 langchainhub
 langchain-pinecone
 langchain-community
 langchain-huggingface
+huggingface-hub
 streamlit
 text_generation

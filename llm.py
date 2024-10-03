@@ -21,11 +21,6 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
     return store[session_id]
 
 
-def parse_data():
-    loader = CSVLoader(file_path='./wine.csv', encoding='utf-8')
-    return loader.load()
-
-
 def get_retriever():
     try:
         model_path = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -36,7 +31,8 @@ def get_retriever():
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs
         )
-        data = parse_data()
+        loader = CSVLoader(file_path='./wine.csv', encoding='utf-8')
+        data = loader.load()
         database = PineconeVectorStore.from_documents(data, embedding, index_name='wine-index')
         retriever = database.as_retriever()
         return retriever
