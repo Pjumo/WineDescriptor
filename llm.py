@@ -31,7 +31,7 @@ def parse_data():
 @st.cache_resource
 def get_retriever():
     try:
-        logging.info("Embedding !!!!!!!!!!!!!!\n")
+        st.write("Embedding !!!!!!!!!!!!!!")
         model_path = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
         model_kwargs = {'device': 'cpu'}
         encode_kwargs = {'normalize_embeddings': False}
@@ -40,9 +40,9 @@ def get_retriever():
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs
         )
-        logging.info("CSV Loading !!!!!!!!!!!!!!\n")
+        st.write("CSV Loading !!!!!!!!!!!!!!\n")
         data = parse_data()
-        logging.info("Pinecone Vector Store !!!!!!!!!!!!!!\n")
+        st.write("Pinecone Vector Store !!!!!!!!!!!!!!\n")
         database = PineconeVectorStore.from_documents(data, embedding, index_name='wine-index')
         retriever = database.as_retriever()
         return retriever
@@ -53,7 +53,7 @@ def get_retriever():
 
 @st.cache_resource
 def get_llm():
-    logging.info("Model Downloading !!!!!!!!!!!!!!\n")
+    st.write("Model Downloading !!!!!!!!!!!!!!\n")
     return GemmaChatLocalHF(model_name="google/gemma-2b", hf_access_token=os.getenv("HF_ACCESS_TOKEN"))
 
 
@@ -62,13 +62,13 @@ def get_rag_chain():
     prompt = hub.pull("rlm/rag-prompt")
     llm = get_llm()
     retriever = get_retriever()
-    logging.info("QA Chain !!!!!!!!!!!!!!\n")
+    st.write("QA Chain !!!!!!!!!!!!!!\n")
     qa_chain = RetrievalQA.from_chain_type(
         llm,
         retriever=retriever,
         chain_type_kwargs={"prompt": prompt}
     )
-    logging.info("History Chain !!!!!!!!!!!!!!\n")
+    st.write("History Chain !!!!!!!!!!!!!!\n")
     conversational_chain = RunnableWithMessageHistory(
         qa_chain,
         get_session_history,
@@ -85,7 +85,7 @@ def get_ai_message(user_message):
     load_dotenv(verbose=True)
     try:
         rag_chain = get_rag_chain()
-        logging.info("Streaming !!!!!!!!!!!!!!\n")
+        st.write("Streaming !!!!!!!!!!!!!!\n")
         ai_message = rag_chain.stream(
             {
                 "input": user_message
