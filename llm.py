@@ -4,7 +4,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_upstage import UpstageEmbeddings
-from langchain_community.llms import HuggingFaceTextGenInference
+from langchain_huggingface.llms import HuggingFaceEndpoint
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
 from langchain_pinecone import PineconeVectorStore
@@ -57,18 +57,15 @@ def get_history_retriever():
 
 
 def get_llm():
-    llm = HuggingFaceTextGenInference(
-        inference_server_url="https://api-inference.huggingface.co/models/google/gemma-2b",
-        max_new_tokens=1024,
-        top_k=50,
-        temperature=0.1,
+    llm = HuggingFaceEndpoint(
+        endpoint_url="https://api-inference.huggingface.co/models/google/gemma-2b",
+        max_new_tokens=512,
+        top_k=10,
+        top_p=0.95,
+        typical_p=0.95,
+        temperature=0.01,
         repetition_penalty=1.03,
-        server_kwargs={
-            "headers": {
-                "Authorization": f"Bearer {os.getenv('HUGGINGFACEHUB_API_TOKEN')}",
-                "Content-Type": "application/json"
-            }
-        }
+        huggingfacehub_api_token=os.getenv('HUGGINGFACEHUB_API_TOKEN')
     )
     return llm
 
