@@ -39,7 +39,7 @@ def get_llm(model_name):
     llm = GemmaLocalKaggle(
         model_name=model_name,
         keras_backend=keras_backend,
-        max_tokens=1024,
+        max_tokens=64,
     )
     return llm
 
