@@ -35,7 +35,7 @@ def get_retriever():
 
 
 def get_llm(model_name):
-    keras_backend: str = "tensorflow"
+    keras_backend: str = "jax"
     llm = GemmaLocalKaggle(
         model_name=model_name,
         keras_backend=keras_backend,
