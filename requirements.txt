@@ -5,7 +5,6 @@ langchain-google-vertexai
 langchainhub
 langchain-pinecone
 langchain-community
-langchain-huggingface
-huggingface-hub
+langchain-openai
 streamlit
 text_generation

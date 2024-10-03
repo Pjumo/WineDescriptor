@@ -3,10 +3,10 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.llms import HuggingFaceTextGenInference
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -24,14 +24,7 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 
 def get_retriever():
-    model_path = "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M"
-    model_kwargs = {'device': 'cpu'}
-    encode_kwargs = {'normalize_embeddings': False}
-    embedding = HuggingFaceEmbeddings(
-        model_name=model_path,
-        model_kwargs=model_kwargs,
-        encode_kwargs=encode_kwargs
-    )
+    embedding = OpenAIEmbeddings(model='text-embedding-3-large')
     database = PineconeVectorStore.from_existing_index(index_name='wine-upstage-index', embedding=embedding)
     retriever = database.as_retriever()
     return retriever
