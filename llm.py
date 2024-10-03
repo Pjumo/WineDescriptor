@@ -24,7 +24,7 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 
 def get_retriever():
-    model_path = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    model_path = "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M"
     model_kwargs = {'device': 'cpu'}
     encode_kwargs = {'normalize_embeddings': False}
     embedding = HuggingFaceEmbeddings(
