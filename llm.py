@@ -80,9 +80,9 @@ def get_dictionary_chain():
         Please review your question and change it based on our dictionary.
         If you determine that there is no need to change the user's question, you do not need to change it.
         In that case, please just return the question.
-        사전: {dictionary}
+        dictionary: {dictionary}
 
-        질문: {{question}}
+        question: {{question}}
     """)
 
     dictionary_chain = prompt | llm | StrOutputParser()
