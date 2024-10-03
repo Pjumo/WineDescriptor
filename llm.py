@@ -80,7 +80,6 @@ def get_rag_chain():
     return conversational_chain
 
 
-@st.cache_data
 def get_ai_message(user_message):
     load_dotenv(verbose=True)
     try:
