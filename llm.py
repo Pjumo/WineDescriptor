@@ -11,6 +11,7 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 from config import answer_examples
 
@@ -57,6 +58,7 @@ def get_history_retriever():
 
 
 def get_llm():
+    callbacks = [StreamingStdOutCallbackHandler()]
     llm = HuggingFaceEndpoint(
         endpoint_url="https://api-inference.huggingface.co/models/google/gemma-2b",
         max_new_tokens=512,
@@ -65,6 +67,8 @@ def get_llm():
         typical_p=0.95,
         temperature=0.01,
         repetition_penalty=1.03,
+        callbacks=callbacks,
+        streaming=True,
         huggingfacehub_api_token=os.getenv('HUGGINGFACEHUB_API_TOKEN')
     )
     return llm
