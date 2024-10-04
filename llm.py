@@ -3,6 +3,7 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
+from langchain_core.messages import HumanMessage
 from langchain_upstage import UpstageEmbeddings
 from langchain_huggingface.llms import HuggingFaceEndpoint
 from langchain_core.output_parsers import StrOutputParser
@@ -114,7 +115,7 @@ def get_rag_chain():
             ("system", system_prompt),
             few_shot_prompt,
             MessagesPlaceholder("chat_history"),
-            ("human", "{input}</s>"),
+            ("human", "{input}"),
         ]
     )
     history_aware_retriever = get_history_retriever()
@@ -137,7 +138,7 @@ def get_ai_response(user_message):
     wine_chain = rag_chain
     ai_response = wine_chain.stream(
         {
-            "input": user_message
+            "input": HumanMessage(user_message)
         },
         config={
             "configurable": {"session_id": "abc123"}
