@@ -12,8 +12,6 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
-from config import answer_examples
-
 store = {}
 
 
@@ -89,28 +87,19 @@ def get_history_retriever():
 
 def get_rag_chain():
     llm = get_llm()
-    example_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("human", "{input}"),
-            ("ai", "{answer}"),
-        ]
-    )
-    few_shot_prompt = FewShotChatMessagePromptTemplate(
-        example_prompt=example_prompt,
-        examples=answer_examples,
-    )
     system_prompt = (
-        "You are a wine expert. Answer the question about wine"
-        "Please answer using the documents provided below."
-        "If you don't know the answer, please say you don't know."
-        "I would like a short answer of about 2-3 sentences."
+        "You are an assistant for question-answering tasks."
+        "Use the following pieces of retrieved context to answer the question."
+        "If the question is not related to wine, please answer without referring to wine."
+        "you are a wine expert."
+        "If you don't know the answer, just say that you don't know."
+        "Use three sentences maximum and keep the answer concise."
         "\n\n"
         "{context}"
     )
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
-            few_shot_prompt,
             MessagesPlaceholder("chat_history"),
             ("human", "{input}"),
         ]
