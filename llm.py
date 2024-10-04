@@ -3,7 +3,6 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
-from langchain_core.messages import HumanMessage
 from langchain_upstage import UpstageEmbeddings
 from langchain_huggingface.llms import HuggingFaceEndpoint
 from langchain_core.output_parsers import StrOutputParser
@@ -134,11 +133,11 @@ def get_rag_chain():
 
 
 def get_ai_response(user_message):
-    rag_chain = get_rag_chain()
+    rag_chain = get_rag_chain() | StrOutputParser()
     wine_chain = rag_chain
     ai_response = wine_chain.stream(
         {
-            "input": HumanMessage(user_message)
+            "input": user_message
         },
         config={
             "configurable": {"session_id": "abc123"}
