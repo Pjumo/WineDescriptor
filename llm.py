@@ -118,7 +118,8 @@ def get_rag_chain():
         ]
     )
     history_aware_retriever = get_history_retriever()
-    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+    # question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+    question_answer_chain = qa_prompt | llm | StrOutputParser()
 
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
     conversational_rag_chain = RunnableWithMessageHistory(
