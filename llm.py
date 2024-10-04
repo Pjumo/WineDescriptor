@@ -70,21 +70,21 @@ def get_history_retriever():
     return history_aware_retriever
 
 
-# def get_dictionary_chain():
-#     dictionary = ["Expressions for drinks -> wine"]
-#     llm = get_llm()
-#     prompt = ChatPromptTemplate.from_template(f"""
-#         Please review your question and change it based on our dictionary.
-#         If you determine that there is no need to change the user's question, you do not need to change it.
-#         In that case, please just return the question.
-#         dictionary: {dictionary}
-#
-#         question: {{question}}
-#     """)
-#
-#     dictionary_chain = prompt | llm | StrOutputParser()
-#
-#     return dictionary_chain
+def get_dictionary_chain():
+    dictionary = ["Expressions for drinks -> wine"]
+    llm = get_llm()
+    prompt = ChatPromptTemplate.from_template(f"""
+        Please review your question and change it based on our dictionary.
+        If you determine that there is no need to change the user's question, you do not need to change it.
+        In that case, please just return the question.
+        dictionary: {dictionary}
+
+        question: {{question}}
+    """)
+
+    dictionary_chain = prompt | llm | StrOutputParser()
+
+    return dictionary_chain
 
 
 def get_rag_chain():
@@ -110,7 +110,7 @@ def get_rag_chain():
     history_aware_retriever = get_history_retriever()
     question_answer_chain = RetrievalQA.from_chain_type(
         llm,
-        retriever=history_aware_retriever,
+        retriever=get_retriever(),
         chain_type_kwargs={"prompt": prompt},
     )
 
@@ -123,17 +123,17 @@ def get_rag_chain():
         output_messages_key="answer",
     ).pick('answer')
 
-    return conversational_rag_chain
+    return question_answer_chain
 
 
 def get_ai_response(user_message):
     rag_chain = get_rag_chain()
-    ai_response = rag_chain.stream(
+    ai_response = rag_chain.invoke(
         {
             "input": user_message
         },
-        config={
-            "configurable": {"session_id": "abc123"}
-        },
+        # config={
+        #     "configurable": {"session_id": "abc123"}
+        # },
     )
-    return ai_response
+    return ai_response['result']
