@@ -111,7 +111,7 @@ def get_rag_chain():
     question_answer_chain = RetrievalQA.from_chain_type(
         llm,
         retriever=history_aware_retriever,
-        chain_type={"prompt": prompt},
+        chain_type_kwargs={"prompt": prompt},
     )
 
     # rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
