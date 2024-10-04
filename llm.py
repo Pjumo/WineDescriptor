@@ -3,7 +3,6 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_upstage import UpstageEmbeddings
 from langchain_huggingface.llms import HuggingFaceEndpoint
 from langchain_core.output_parsers import StrOutputParser
@@ -12,7 +11,8 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain import hub
+
+from config import answer_examples
 
 store = {}
 
@@ -70,70 +70,77 @@ def get_history_retriever():
     return history_aware_retriever
 
 
-def get_dictionary_chain():
-    dictionary = ["Expressions for drinks -> wine"]
-    llm = get_llm()
-    prompt = ChatPromptTemplate.from_template(f"""
-        Please review your question and change it based on our dictionary.
-        If you determine that there is no need to change the user's question, you do not need to change it.
-        In that case, please just return the question.
-        dictionary: {dictionary}
-
-        question: {{question}}
-    """)
-
-    dictionary_chain = prompt | llm | StrOutputParser()
-
-    return dictionary_chain
+# def get_dictionary_chain():
+#     dictionary = ["Expressions for drinks -> wine"]
+#     llm = get_llm()
+#     prompt = ChatPromptTemplate.from_template(f"""
+#         Please review your question and change it based on our dictionary.
+#         If you determine that there is no need to change the user's question, you do not need to change it.
+#         In that case, please just return the question.
+#         dictionary: {dictionary}
+#
+#         question: {{question}}
+#     """)
+#
+#     dictionary_chain = prompt | llm | StrOutputParser()
+#
+#     return dictionary_chain
 
 
 def get_rag_chain():
     llm = get_llm()
-    # system_prompt = (
-    #     "You are an assistant for question-answering tasks."
-    #     "Use the following pieces of retrieved context to answer the question."
-    #     "If the question is not related to wine, please answer without referring to wine."
-    #     "you are a wine expert."
-    #     "If you don't know the answer, just say that you don't know."
-    #     "Use three sentences maximum and keep the answer concise."
-    #     "\n\n"
-    #     "{context}"
-    # )
-    # qa_prompt = ChatPromptTemplate.from_messages(
-    #     [
-    #         ("system", system_prompt),
-    #         MessagesPlaceholder("chat_history"),
-    #         ("human", "{input}"),
-    #     ]
-    # )
-    prompt = hub.pull("rlm/rag-prompt")
-    history_aware_retriever = get_history_retriever()
-    question_answer_chain = RetrievalQA.from_chain_type(
-        llm,
-        retriever=get_retriever(),
-        chain_type_kwargs={"prompt": prompt},
+    example_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("human", "{input}"),
+            ("ai", "{answer}"),
+        ]
     )
+    few_shot_prompt = FewShotChatMessagePromptTemplate(
+        example_prompt=example_prompt,
+        examples=answer_examples,
+    )
+    system_prompt = (
+        "You are an assistant for question-answering tasks."
+        "Use the following pieces of retrieved context to answer the question."
+        "If the question is not related to wine, please answer without referring to wine."
+        "you are a wine expert."
+        "If you don't know the answer, just say that you don't know."
+        "Use three sentences maximum and keep the answer concise."
+        "\n\n"
+        "{context}"
+    )
+    qa_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            few_shot_prompt,
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}"),
+        ]
+    )
+    history_aware_retriever = get_history_retriever()
+    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
-    # rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+    rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
     conversational_rag_chain = RunnableWithMessageHistory(
-        question_answer_chain,
+        rag_chain,
         get_session_history,
         input_messages_key="input",
         history_messages_key="chat_history",
         output_messages_key="answer",
     ).pick('answer')
 
-    return question_answer_chain
+    return conversational_rag_chain
 
 
 def get_ai_response(user_message):
     rag_chain = get_rag_chain()
-    ai_response = rag_chain.invoke(
+    wine_chain = rag_chain
+    ai_response = wine_chain.stream(
         {
-            "query": user_message
+            "question": user_message
         },
-        # config={
-        #     "configurable": {"session_id": "abc123"}
-        # },
+        config={
+            "configurable": {"session_id": "abc123"}
+        },
     )
-    return ai_response['result']
+    return ai_response
