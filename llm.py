@@ -3,6 +3,7 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
+from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_upstage import UpstageEmbeddings
 from langchain_huggingface.llms import HuggingFaceEndpoint
 from langchain_core.output_parsers import StrOutputParser
@@ -11,6 +12,7 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain import hub
 
 store = {}
 
@@ -87,29 +89,34 @@ def get_history_retriever():
 
 def get_rag_chain():
     llm = get_llm()
-    system_prompt = (
-        "You are an assistant for question-answering tasks."
-        "Use the following pieces of retrieved context to answer the question."
-        "If the question is not related to wine, please answer without referring to wine."
-        "you are a wine expert."
-        "If you don't know the answer, just say that you don't know."
-        "Use three sentences maximum and keep the answer concise."
-        "\n\n"
-        "{context}"
-    )
-    qa_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            MessagesPlaceholder("chat_history"),
-            ("human", "{input}"),
-        ]
-    )
+    # system_prompt = (
+    #     "You are an assistant for question-answering tasks."
+    #     "Use the following pieces of retrieved context to answer the question."
+    #     "If the question is not related to wine, please answer without referring to wine."
+    #     "you are a wine expert."
+    #     "If you don't know the answer, just say that you don't know."
+    #     "Use three sentences maximum and keep the answer concise."
+    #     "\n\n"
+    #     "{context}"
+    # )
+    # qa_prompt = ChatPromptTemplate.from_messages(
+    #     [
+    #         ("system", system_prompt),
+    #         MessagesPlaceholder("chat_history"),
+    #         ("human", "{input}"),
+    #     ]
+    # )
+    prompt = hub.pull("rlm/rag-prompt")
     history_aware_retriever = get_history_retriever()
-    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+    question_answer_chain = RetrievalQA.from_chain_type(
+        llm,
+        retriever=history_aware_retriever,
+        chain_type={"prompt": prompt},
+    )
 
-    rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+    # rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
     conversational_rag_chain = RunnableWithMessageHistory(
-        rag_chain,
+        question_answer_chain,
         get_session_history,
         input_messages_key="input",
         history_messages_key="chat_history",
