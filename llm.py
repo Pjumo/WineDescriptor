@@ -3,8 +3,8 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
+from langchain_google_vertexai import GemmaLocalHF
 from langchain_upstage import UpstageEmbeddings
-from langchain_huggingface.llms import HuggingFaceEndpoint
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
 from langchain_pinecone import PineconeVectorStore
@@ -57,16 +57,7 @@ def get_history_retriever():
 
 
 def get_llm():
-    llm = HuggingFaceEndpoint(
-        endpoint_url="https://api-inference.huggingface.co/models/google/gemma-2b",
-        max_new_tokens=512,
-        top_k=10,
-        top_p=0.95,
-        typical_p=0.95,
-        temperature=0.01,
-        repetition_penalty=1.03,
-        huggingfacehub_api_token=os.getenv('HUGGINGFACEHUB_API_TOKEN')
-    )
+    llm = GemmaLocalHF(model_name='google/gemma-2b')
     return llm
 
 
