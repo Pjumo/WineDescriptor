@@ -6,7 +6,6 @@ langchain-upstage
 langchain-pinecone
 langchain-community
 langchain-huggingface
-langchain-google-vertexai
 streamlit
 text_generation
 python-dotenv
