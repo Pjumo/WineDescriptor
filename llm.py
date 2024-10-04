@@ -130,7 +130,7 @@ def get_ai_response(user_message):
     rag_chain = get_rag_chain()
     ai_response = rag_chain.invoke(
         {
-            "input": user_message
+            "query": user_message
         },
         # config={
         #     "configurable": {"session_id": "abc123"}
