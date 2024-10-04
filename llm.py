@@ -11,7 +11,6 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 from config import answer_examples
 
@@ -27,7 +26,7 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 def get_retriever():
     embedding = UpstageEmbeddings(api_key=os.getenv('UP_API_KEY'), model="solar-embedding-1-large")
     database = PineconeVectorStore.from_existing_index(index_name='wine-upstage-index', embedding=embedding)
-    retriever = database.as_retriever()
+    retriever = database.as_retriever(search_kwargs={'k': 4})
     return retriever
 
 
@@ -58,7 +57,6 @@ def get_history_retriever():
 
 
 def get_llm():
-    callbacks = [StreamingStdOutCallbackHandler()]
     llm = HuggingFaceEndpoint(
         endpoint_url="https://api-inference.huggingface.co/models/google/gemma-2b",
         max_new_tokens=512,
@@ -67,8 +65,6 @@ def get_llm():
         typical_p=0.95,
         temperature=0.01,
         repetition_penalty=1.03,
-        callbacks=callbacks,
-        streaming=True,
         huggingfacehub_api_token=os.getenv('HUGGINGFACEHUB_API_TOKEN')
     )
     return llm
@@ -119,7 +115,7 @@ def get_rag_chain():
             ("human", "{input}"),
         ]
     )
-    history_aware_retriever = get_retriever()
+    history_aware_retriever = get_history_retriever()
     question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
@@ -144,5 +140,6 @@ def get_ai_response(user_message):
         },
         config={
             "configurable": {"session_id": "abc123"}
-        })
+        },
+    )
     return ai_response
