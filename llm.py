@@ -60,7 +60,7 @@ def get_llm():
     llm = HuggingFaceEndpoint(
         endpoint_url="https://api-inference.huggingface.co/models/google/gemma-2b",
         max_new_tokens=512,
-        top_k=1,
+        top_k=10,
         top_p=0.95,
         typical_p=0.95,
         temperature=0.01,
