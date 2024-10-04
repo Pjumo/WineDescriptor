@@ -3,7 +3,7 @@ import os
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
-from langchain_google_vertexai import GemmaLocalHF
+from langchain_google_vertexai import GemmaChatLocalHF
 from langchain_upstage import UpstageEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
@@ -57,7 +57,7 @@ def get_history_retriever():
 
 
 def get_llm():
-    llm = GemmaLocalHF(model_name='google/gemma-2b', hf_access_token=os.getenv('HF_ACCESS_TOKEN'))
+    llm = GemmaChatLocalHF(model_name='google/gemma-2b', hf_access_token=os.getenv('HF_ACCESS_TOKEN'))
     return llm
 
 
