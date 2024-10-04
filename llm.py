@@ -114,7 +114,7 @@ def get_rag_chain():
             ("system", system_prompt),
             few_shot_prompt,
             MessagesPlaceholder("chat_history"),
-            ("human", "{input}"),
+            ("human", "{input}</s>"),
         ]
     )
     history_aware_retriever = get_history_retriever()
