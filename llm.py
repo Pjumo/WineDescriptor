@@ -17,6 +17,20 @@ from config import answer_examples
 store = {}
 
 
+def get_llm():
+    llm = HuggingFaceEndpoint(
+        endpoint_url="https://api-inference.huggingface.co/models/google/gemma-2b",
+        max_new_tokens=512,
+        top_k=10,
+        top_p=0.95,
+        typical_p=0.95,
+        temperature=0.01,
+        repetition_penalty=1.03,
+        huggingfacehub_api_token=os.getenv('HF_ACCESS_TOKEN')
+    )
+    return llm
+
+
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
@@ -56,35 +70,21 @@ def get_history_retriever():
     return history_aware_retriever
 
 
-def get_llm():
-    llm = HuggingFaceEndpoint(
-        endpoint_url="https://api-inference.huggingface.co/models/google/gemma-2b",
-        max_new_tokens=512,
-        top_k=10,
-        top_p=0.95,
-        typical_p=0.95,
-        temperature=0.01,
-        repetition_penalty=1.03,
-        huggingfacehub_api_token=os.getenv('HF_ACCESS_TOKEN')
-    )
-    return llm
-
-
-def get_dictionary_chain():
-    dictionary = ["Expressions for drinks -> wine"]
-    llm = get_llm()
-    prompt = ChatPromptTemplate.from_template(f"""
-        Please review your question and change it based on our dictionary.
-        If you determine that there is no need to change the user's question, you do not need to change it.
-        In that case, please just return the question.
-        dictionary: {dictionary}
-
-        question: {{question}}
-    """)
-
-    dictionary_chain = prompt | llm | StrOutputParser()
-
-    return dictionary_chain
+# def get_dictionary_chain():
+#     dictionary = ["Expressions for drinks -> wine"]
+#     llm = get_llm()
+#     prompt = ChatPromptTemplate.from_template(f"""
+#         Please review your question and change it based on our dictionary.
+#         If you determine that there is no need to change the user's question, you do not need to change it.
+#         In that case, please just return the question.
+#         dictionary: {dictionary}
+#
+#         question: {{question}}
+#     """)
+#
+#     dictionary_chain = prompt | llm | StrOutputParser()
+#
+#     return dictionary_chain
 
 
 def get_rag_chain():
@@ -131,12 +131,10 @@ def get_rag_chain():
 
 
 def get_ai_response(user_message):
-    dictionary_chain = get_dictionary_chain()
     rag_chain = get_rag_chain()
-    wine_chain = {"input": dictionary_chain} | rag_chain
-    ai_response = wine_chain.stream(
+    ai_response = rag_chain.stream(
         {
-            "question": user_message
+            "input": user_message
         },
         config={
             "configurable": {"session_id": "abc123"}
