@@ -57,7 +57,7 @@ def get_history_retriever():
 
 
 def get_llm():
-    llm = GemmaLocalHF(model_name='google/gemma-2b')
+    llm = GemmaLocalHF(model_name='google/gemma-2b', hf_access_token=os.getenv('HF_ACCESS_TOKEN'))
     return llm
 
 

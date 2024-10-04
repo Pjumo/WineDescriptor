@@ -8,7 +8,7 @@ st.title("🍷 Wine Descriptor")
 st.caption("Answering your questions about wine")
 
 load_dotenv(verbose=True)
-os.environ['HUGGINGFACEHUB_API_TOKEN'] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
+os.environ['HF_ACCESS_TOKEN'] = os.getenv('HF_ACCESS_TOKEN')
 os.environ['PINECONE_API_KEY'] = os.getenv('PINECONE_API_KEY')
 
 if 'message_list' not in st.session_state:
